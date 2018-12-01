@@ -1,0 +1,2 @@
+* Advent of Code 2018 Solutions
+My solutions for [[https://adventofcode.com/2018][Advent of Code 2018]].
