@@ -1,0 +1,142 @@
+* =--- Day 2: Inventory Management System ---=
+
+You stop falling through time, catch your breath, and check the screen on the device. "Destination reached. Current Year: 1518. Current Location: North Pole Utility Closet 83N10." You made it! Now, to find those anomalies.
+
+Outside the utility closet, you hear footsteps and a voice. "...I'm not sure either. But now that so many people have chimneys, maybe he could sneak in that way?" Another voice responds, "Actually, we've been working on a new kind of suit that would let him fit through tight spaces like that. But, I heard that a few days ago, they lost the prototype fabric, the design plans, everything! Nobody on the team can even seem to remember important details of the project!"
+
+"Wouldn't they have had enough fabric to fill several boxes in the warehouse? They'd be stored together, so the box IDs should be similar. Too bad it would take forever to search the warehouse for two similar box IDs..." They walk too far away to hear any more.
+
+Late at night, you sneak to the warehouse - who knows what kinds of paradoxes you could cause if you were discovered - and use your fancy wrist device to quickly scan every box and produce a list of the likely candidates (your puzzle input).
+
+To make sure you didn't miss any, you scan the likely candidate boxes again, counting the number that have an ID containing exactly two of any letter and then separately counting those with exactly three of any letter. You can multiply those two counts together to get a rudimentary checksum and compare it to what your device predicts.
+
+For example, if you see the following box IDs:
+
+- abcdef contains no letters that appear exactly two or three times.
+- bababc contains two a and three b, so it counts for both.
+- abbcde contains two b, but no letter appears exactly three times.
+- abcccd contains three c, but no letter appears exactly two times.
+- aabcdd contains two a and two d, but it only counts once.
+- abcdee contains two e.
+- ababab contains three a and three b, but it only counts once.
+
+Of these box IDs, four of them contain a letter which appears exactly twice, and three of them contain a letter which appears exactly three times. Multiplying these together produces a checksum of 4 * 3 = 12.
+
+What is the checksum for your list of box IDs?
+** Solution
+#+BEGIN_SRC scheme :tangle src/day02/solution1.scm
+  (use-modules (ice-9 rdelim))
+
+  (define (parse-input)
+    (define (parse input)
+      (let ((row (read-line)))
+        (if (eof-object? row)
+            input
+            (parse (cons row input)))))
+    (parse '()))
+
+  (define input (with-input-from-file "input.txt" parse-input))
+
+  (define (checksum box-ids)
+    (define (calculate-checksum twos-total threes-total box-ids)
+      (if (null? box-ids)
+          (* twos-total threes-total)
+          (let ((box-id (car box-ids)))
+            (calculate-checksum (+ (contains-two? box-id) twos-total)
+                                (+ (contains-three? box-id) threes-total)
+                                (cdr box-ids)))))
+
+    (define (contains-two? box-id)
+      (contains-num? box-id 2))
+
+    (define (contains-three? box-id)
+      (contains-num? box-id 3))
+
+    (define (contains-num? box-id num)
+      (define (iter letters)
+        (cond ((null? letters) 0)
+              ((= num (length (sames (car letters) (string->list box-id)))) 1)
+              (else (iter (cdr letters)))))
+      (iter (string->list box-id)))
+
+    (define (sames chr lst)
+      (filter (lambda (x) (eq? chr x)) lst))
+
+    (calculate-checksum 0 0 box-ids))
+
+  (define (solution1)
+    (checksum input))
+#+END_SRC
+
+* =--- Part Two ---=
+
+Confident that your list of box IDs is complete, you're ready to find the boxes full of prototype fabric.
+
+The boxes will have IDs which differ by exactly one character at the same position in both strings. For example, given the following box IDs:
+
+#+BEGIN_SRC 
+abcde
+fghij
+klmno
+pqrst
+fguij
+axcye
+wvxyz
+#+END_SRC
+
+The IDs abcde and axcye are close, but they differ by two characters (the second and fourth). However, the IDs fghij and fguij differ by exactly one character, the third (h and u). Those must be the correct boxes.
+
+What letters are common between the two correct box IDs? (In the example above, this is found by removing the differing character from either ID, producing fgij.)
+
+
+** Solution
+#+BEGIN_SRC scheme :tangle src/day02/solution2.scm
+  (use-modules (ice-9 rdelim)
+               (srfi srfi-1))
+
+  (define (parse-input)
+    (define (parse input)
+      (let ((row (read-line)))
+        (if (eof-object? row)
+            input
+            (parse (cons row input)))))
+    (reverse (parse '())))
+
+  (define input (with-input-from-file "input.txt" parse-input))
+
+  (define (find-prototype-fabric box-ids)
+    (define (find-box-ids times other-box-ids)
+      (if (null? other-box-ids)
+          #f
+          (let ((answer? (go-through-letters (car other-box-ids) 0 times)))
+            (if answer?
+                answer?
+                (find-box-ids (+ 1 times)
+                              (cdr other-box-ids))))))
+
+    (define (go-through-letters box-id times current-location)
+      (let ((id (list->string (remove-nth times (string->list box-id))))
+            (ids (remove-nth current-location (remove-letters times box-ids))))
+        (cond ((= times (string-length id)) #f)
+              ((member id ids) id)
+              (else (go-through-letters box-id
+                                        (+ 1 times)
+                                        current-location)))))
+
+    (define (remove-letters nth box-ids)
+      (map (lambda (x) (list->string (remove-nth nth (string->list x))))
+           box-ids))
+
+    (find-box-ids 0 box-ids))
+
+  (define (solution2)
+    (find-prototype-fabric input))
+
+  (define (remove-nth nth lst)
+    (define (inner nth lst)
+      (cond ((null? lst) '())
+            ((<= nth 0) (cdr lst))
+            (else (cons (car lst)
+                        (inner (- nth 1) (cdr lst))))))
+    (inner nth lst))
+#+END_SRC
