@@ -9,8 +9,47 @@
           (parse (cons row input)))))
   (reverse (parse '())))
 
+(define input (with-input-from-file "testinput.txt" parse-input))
+
 (define (overlap claims)
-  (... claims))
+  (define (parse-claims claims)
+    (if (null? claims)
+        '()
+        (cons (parse-claim (car claims))
+              (parse-claims (cdr claims)))))
+
+  (define (parse-claim claim)
+    (let* ((claim-split (string-split claim #\space))
+           (id (string->number (substring (car claim-split) 1)))
+           (start (string-split (caddr claim-split) #\,))
+           (size (map string->number (string-split (cadddr claim-split) #\x))))
+      (list id
+            (list (string->number (car start))
+                  (string->number (substring (cadr start) 0 (1- (string-length (cadr start))))))
+            size)))
+
+  (define (generate-points claim)
+    (let ((rect (make-rectangle (claim-start claim)
+                                (make-point (+ (get-x (claim-start claim))
+                                               (get-x (claim-size claim)))
+                                            (+ (get-y (claim-start claim))
+                                               (get-y (claim-size claim)))))))
+      (define (generate points)
+        (cond ((null? points)
+               (generate (cons (get-top-left rect) points)))
+              ((< (get-x (car points))
+                  (1- (get-x (get-bottom-right rect))))
+               (generate (cons (make-point (1+ (get-x (car points))) (get-y (car points)))
+                               points)))
+              ((< (get-y (car points))
+                  (1- (get-y (get-bottom-right rect))))
+               (generate (cons (make-point (get-x (get-top-left rect))
+                                           (1+ (get-y (car points))))
+                               points)))
+              (else points)))
+      (generate '())))
+
+  (generate-points (car (parse-claims claims))))
 
 (define (solution1)
   (overlap input))
@@ -27,16 +66,6 @@
 
 (define get-top-left car)
 (define get-bottom-right cadr)
-
-(define (parse-claim claim)
-  (let* ((claim-split (string-split claim #\space))
-         (id (string->number (substring (car claim-split) 1)))
-         (start (string-split (caddr claim-split) #\,))
-         (size (map string->number (string-split (cadddr claim-split) #\x))))
-    (list id
-          (list (string->number (car start))
-                (string->number (substring (cadr start) 0 (1-  (string-length (cadr start))))))
-          size)))
 
 (define claim-id car)
 (define claim-start cadr)
