@@ -50,10 +50,10 @@
       (generate (list (get-top-left rect)))))
 
   (define (generate-blanket claims)
-    (apply append! (map! generate-points claims)))
+    (append-map! generate-points claims))
 
   (define (calculate-overlap blanket)
-    (- (length blanket) (length (delete-duplicates blanket))))
+    (- (length blanket) (length (delete-duplicates! blanket))))
 
   (calculate-overlap (generate-blanket (parse-claims claims))))
 
