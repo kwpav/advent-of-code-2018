@@ -49,10 +49,30 @@
               (else points)))
       (generate '())))
 
-  (generate-points (car (parse-claims claims))))
+  (define (generate-blanket claims)
+    (if (null? claims)
+        '()
+        (cons (generate-points (car claims))
+              (generate-blanket (cdr claims)))))
+
+  (define (calculate-overlap blanket)
+    (- (length blanket) (length (dedupe blanket))))
+
+  (calculate-overlap (apply append (generate-blanket (parse-claims claims)))))
 
 (define (solution1)
   (overlap input))
+
+(define (dedupe e)
+  (if (null? e) '()
+      (cons (car e) (dedupe (filter (lambda (x) (not (equal? x (car e)))) 
+                                    (cdr e))))))
+
+(define (flatten x)
+    (cond ((null? x) '())
+          ((pair? x) (append (flatten (car x)) (flatten (cdr x))))
+          (else (list x))))
+
 
 (define (make-point x y) (list x y))
 (define get-x car)
