@@ -1,3 +1,7 @@
+#!/usr/local/bin/guile \
+-e solution1 -s
+!#
+
 (use-modules (ice-9 rdelim)
              (srfi srfi-1))
 
@@ -38,19 +42,19 @@
                                    (get-y (claim-size claim))))))
 
   (define (generate-points rect)
-    (define (generate points)
-      (cond ((< (get-x (car points))
-                (1- (get-x (get-bottom-right rect))))
-             (generate (cons (make-point (1+ (get-x (car points))) (get-y (car points)))
-                             points)))
-            ((< (get-y (car points))
-                (1- (get-y (get-bottom-right rect))))
-             (generate (cons (make-point (get-x (get-top-left rect))
-                                         (1+ (get-y (car points))))
-                             points)))
-            (else points)))
-    (generate (list (get-top-left rect))))
-
+    (let ((max-y (1- (get-y (get-bottom-right rect))))
+          (max-x (1- (get-x (get-bottom-right rect)))))
+      (let loop ((points (list (get-top-left rect))))
+        (cond ((< (get-x (car points)) max-x)
+               (loop (cons (make-point (1+ (get-x (car points)))
+                                       (get-y (car points)))
+                           points)))
+              ((< (get-y (car points)) max-y)
+               (loop (cons (make-point (get-x (get-top-left rect))
+                                       (1+ (get-y (car points))))
+                           points)))
+              (else points)))))
+      
   (define (generate-blanket claims)
     (append-map! generate-points (map! claim->rectangle claims)))
 
@@ -59,8 +63,8 @@
 
   (calculate-overlap (generate-blanket (parse-claims claims))))
 
-(define (solution1)
-  (overlap input))
+(define (solution1 args)
+  (display (overlap input)))
 
 (define (make-point x y) (list x y))
 (define get-x car)
