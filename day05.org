@@ -72,7 +72,7 @@ In this example, removing all C/c units was best, producing the answer 4.
 What is the length of the shortest polymer you can produce by removing all units of exactly one type and fully reacting the result?
 
 ** Solution
-#+BEGIN_SRC scheme :tangle src/day05/solution1.scm
+#+BEGIN_SRC scheme :tangle src/day05/solution2.scm
   #!/usr/local/bin/guile \
   -e solution1 -s
   !#
