@@ -42,18 +42,14 @@
                                    (get-y (claim-size claim))))))
 
   (define (generate-points rect)
-    (let ((max-y (1- (get-y (get-bottom-right rect))))
-          (max-x (1- (get-x (get-bottom-right rect)))))
-      (let loop ((points (list (get-top-left rect))))
-        (cond ((< (get-x (car points)) max-x)
-               (loop (cons (make-point (1+ (get-x (car points)))
-                                       (get-y (car points)))
-                           points)))
-              ((< (get-y (car points)) max-y)
-               (loop (cons (make-point (get-x (get-top-left rect))
-                                       (1+ (get-y (car points))))
-                           points)))
-              (else points)))))
+    (define points (list (get-top-left rect)))
+    (let ((max-y (- (get-y (get-bottom-right rect)) 1))
+          (max-x (- (get-x (get-bottom-right rect)) 1)))
+      (do ((y (get-y (get-top-left rect)) (1+ y)))
+          ((>= y max-y) points)
+        (do ((x (get-x (get-top-left rect)) (1+ x)))
+            ((>= x max-x))
+          (set! points (cons (make-point x y) points))))))
       
   (define (generate-blanket claims)
     (append-map! generate-points (map! claim->rectangle claims)))
@@ -63,8 +59,8 @@
 
   (calculate-overlap (generate-blanket (parse-claims claims))))
 
-(define (solution1 args)
-  (display (overlap input)))
+(define (solution1)
+  (overlap input))
 
 (define (make-point x y) (list x y))
 (define get-x car)
