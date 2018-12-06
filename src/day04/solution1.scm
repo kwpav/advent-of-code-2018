@@ -1,14 +1,7 @@
-(use-modules (ice-9 rdelim)
+(use-modules (aoc parse)
+             (ice-9 rdelim)
              (srfi srfi-1)
              (srfi srfi-13))
-
-(define (parse-input)
-  (define (parse input)
-    (let ((row (read-line)))
-      (if (eof-object? row)
-          input
-          (parse (cons row input)))))
-  (reverse! (parse '())))
 
 (define input (map (lambda (x) (string-split x #\space)) (with-input-from-file "testinput.txt" parse-input)))
 
@@ -29,7 +22,7 @@
                                                     (cdr log)))
           (else (generate-log guard-id
                               (if (= 1 (length (car guards)))
-                                  (append (car guards) (list 1))
+                                  (cons (list 1) (car guards))
                                   (cons 2 (cadr guards)))
                               (cdr log)))))
   (generate-log #f '() l))
