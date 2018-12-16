@@ -1,0 +1,78 @@
+* =--- Day 7: The Sum of Its Parts ---=
+* Solution
+Trying out a solution written in org mode code blocks this time.
+
+#+BEGIN_SRC python :exports code :results silent :session :tangle src/day07/solution.py
+  import collections
+  import re
+  import string
+#+END_SRC
+
+Go through the input and create a list steps for every line in the input. The list is the first step, and the step that must be completed next.
+#+BEGIN_SRC python :exports code :results silent :session :tangle src/day07/solution.py
+  with open("./src/day07/input.txt") as file:
+      data = file.read().splitlines()
+
+  def parse_steps():
+      regex = re.compile(' [A-Z] ')
+      return list(map(lambda i:
+                      list(map(lambda j: j.strip(),
+                               regex.findall(i))),
+      data))
+
+#+END_SRC
+#+BEGIN_SRC python :results output :session
+  print(parse_steps())
+#+END_SRC
+
+#+RESULTS:
+: [['W', 'B'], ['G', 'T'], ['B', 'P'], ['R', 'M'], ['K', 'Q'], ['Z', 'X'], ['V', 'S'], ['D', 'U'], ['Y', 'J'], ['A', 'C'], ['M', 'U'], ['E', 'X'], ['T', 'F'], ['U', 'C'], ['C', 'Q'], ['S', 'N'], ['X', 'H'], ['F', 'L'], ['Q', 'J'], ['P', 'J'], ['I', 'L'], ['J', 'L'], ['L', 'N'], ['H', 'O'], ['N', 'O'], ['B', 'S'], ['A', 'T'], ['G', 'K'], ['Z', 'N'], ['V', 'I'], ['Z', 'Q'], ['I', 'J'], ['S', 'I'], ['P', 'I'], ['B', 'C'], ['M', 'L'], ['G', 'Z'], ['M', 'C'], ['U', 'F'], ['B', 'Y'], ['W', 'U'], ['G', 'M'], ['M', 'J'], ['C', 'L'], ['K', 'D'], ['S', 'X'], ['Q', 'N'], ['V', 'N'], ['R', 'C'], ['E', 'H'], ['D', 'P'], ['H', 'N'], ['X', 'O'], ['K', 'Y'], ['R', 'F'], ['L', 'O'], ['Y', 'M'], ['T', 'I'], ['T', 'Q'], ['B', 'F'], ['C', 'N'], ['V', 'M'], ['T', 'N'], ['S', 'L'], ['P', 'H'], ['X', 'Q'], ['Z', 'I'], ['Q', 'O'], ['I', 'N'], ['E', 'P'], ['R', 'L'], ['P', 'L'], ['T', 'H'], ['G', 'X'], ['J', 'H'], ['G', 'V'], ['K', 'N'], ['R', 'Q'], ['Z', 'T'], ['E', 'F'], ['Y', 'H'], ['P', 'N'], ['S', 'O'], ['L', 'H'], ['W', 'E'], ['X', 'N'], ['Z', 'D'], ['A', 'H'], ['T', 'X'], ['E', 'Q'], ['K', 'U'], ['M', 'T'], ['J', 'O'], ['D', 'N'], ['K', 'A'], ['G', 'E'], ['R', 'H'], ['W', 'M'], ['U', 'N'], ['Q', 'H'], ['Y', 'A']]
+
+Now we take the parsed input and create a graph data structure using a dictionary where the key is the pre-requisite step and the values are its requirements.
+#+BEGIN_SRC python :exports code :results silent :session :tangle src/day07/solution.py
+  def add_next_step(steps, next_step, current_step):
+      try:
+          steps[next_step].add(current_step)
+      except KeyError:
+          steps[next_step] = [current_step]
+      return steps
+
+
+  def add_steps(parsed_steps):
+      steps = collections.defaultdict(set)
+      for directions in parsed_steps:
+          steps = add_next_step(steps, directions[1], directions[0])
+      return steps
+
+#+END_SRC
+#+BEGIN_SRC python :exports code :results output :session
+  print(add_steps(parse_steps()))
+#+END_SRC
+
+#+RESULTS:
+: defaultdict(<class 'set'>, {'B': {'W'}, 'T': {'M', 'A', 'Z', 'G'}, 'P': {'D', 'B', 'E'}, 'M': {'G', 'R', 'W', 'V', 'Y'}, 'Q': {'K', 'Z', 'E', 'T', 'R', 'C', 'X'}, 'X': {'G', 'S', 'Z', 'E', 'T'}, 'S': {'B', 'V'}, 'U': {'K', 'D', 'M', 'W'}, 'J': {'Q', 'P', 'I', 'M', 'Y'}, 'C': {'U', 'M', 'B', 'R', 'A'}, 'F': {'U', 'E', 'T', 'B', 'R'}, 'N': {'K', 'Q', 'L', 'P', 'D', 'S', 'Z', 'U', 'T', 'I', 'X', 'C', 'V', 'H'}, 'H': {'Q', 'P', 'J', 'Y', 'L', 'E', 'T', 'R', 'A', 'X'}, 'L': {'P', 'J', 'S', 'F', 'I', 'M', 'R', 'C'}, 'O': {'Q', 'L', 'J', 'S', 'N', 'H', 'X'}, 'K': {'G'}, 'I': {'P', 'S', 'Z', 'T', 'V'}, 'Z': {'G'}, 'Y': {'K', 'B'}, 'D': {'K', 'Z'}, 'V': {'G'}, 'E': {'W', 'G'}, 'A': {'K', 'Y'}})
+
+For the solution, keep going through every letter in the alphabet and add them to the list when the steps requirements are met.
+#+BEGIN_SRC python :exports code :session :tangle src/day07/solution.py
+  def requirements_met(letter, steps, solution):
+      return letter not in solution and \
+          steps[letter] & set(solution) == steps[letter]
+
+
+  def solution1():
+      steps = add_steps(parse_steps())
+      letters = list(string.ascii_uppercase)
+      solution = []
+      while len(solution) < 26:
+          for letter in letters:
+              if requirements_met(letter, steps, solution):
+                  solution.append(letter)
+                  break
+      return ''.join(solution)
+#+END_SRC
+#+BEGIN_SRC python :exports code :results output :session
+  print(solution1())
+#+END_SRC
+
+#+RESULTS:
+: GKRVWBESYAMZDPTIUCFXQJLHNO
